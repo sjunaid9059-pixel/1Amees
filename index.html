@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#9F1D4A">
+<title>Meesho Loot</title>
+<script src="/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#9F1D4A;--pink2:#E91E63;--grape:#7B1FA2;
+  --candy:linear-gradient(135deg,#9F1D4A 0%,#E91E63 55%,#7B1FA2 120%);
+  --bg:#F7F5F8;--surface:#FFFFFF;--surface2:#F1EEF3;
+  --ink:#1A1A1A;--ink2:#4A4A4A;--ink3:#8A8A8A;--line:#E8E4EC;
+  --mint:#0D9488;--mint-bg:#CCFBF1;--sun:#D97706;--berry:#DC2626;
+  --puff:0 2px 8px rgba(0,0,0,.06);--glow:0 4px 16px rgba(159,29,74,.28);
+  --r:16px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow-x:hidden}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
+  font-size:14.5px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
+img{display:block;max-width:100%}
+.hidden{display:none!important}
+
+/* topbar */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px));
+  background:var(--surface);border-bottom:1px solid var(--line);
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.brand{
+  width:36px;height:36px;border-radius:11px;background:var(--candy);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:800;font-size:17px;flex-shrink:0;box-shadow:var(--glow);
+}
+.acct-pill{
+  flex:1;min-width:0;display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--line);border-radius:10px;
+  padding:7px 12px;font-weight:700;font-size:12.5px;color:var(--ink);
+}
+.wallet-chip{
+  background:var(--pink);color:#fff;border-radius:10px;padding:7px 12px;
+  font-weight:800;font-size:12px;white-space:nowrap;box-shadow:var(--glow);
+}
+
+/* layout */
+.view{padding-bottom:calc(72px + var(--safe-b))}
+.page-pad{padding:14px 12px}
+.page-title{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:12px}
+
+/* tabbar */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  display:flex;background:var(--surface);
+  border-top:1px solid var(--line);
+  padding:3px 0 calc(3px + var(--safe-b));
+  box-shadow:0 -2px 10px rgba(0,0,0,.05);
+}
+.tabbar button{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;
+  padding:6px 0 4px;color:var(--ink3);font-size:10px;font-weight:700;
+  transition:color .15s;
+}
+.tabbar button .ico{font-size:19px;line-height:1}
+.tabbar button.active{color:var(--pink)}
+.badge{
+  position:absolute;top:2px;right:calc(50% - 18px);
+  min-width:16px;height:16px;padding:0 4px;border-radius:99px;
+  background:var(--berry);color:#fff;font-size:10px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--surface);
+}
+
+/* cards & products */
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;margin-bottom:10px;box-shadow:var(--puff);
+}
+.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.product-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;transition:transform .12s;
+}
+.product-card:active{transform:scale(.97)}
+.product-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--surface2)}
+.product-body{padding:8px 10px 12px}
+.product-name{font-size:12.5px;font-weight:600;line-height:1.3;height:32px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.price-row{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.price-now{font-size:15px;font-weight:800;color:var(--pink)}
+.price-old{font-size:11px;color:var(--ink3);text-decoration:line-through}
+.disc{background:var(--pink);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px}
+.rating{font-size:11px;color:var(--ink2);margin-top:4px}
+.add-btn{
+  width:100%;margin-top:8px;padding:8px;border-radius:9px;
+  background:var(--candy);color:#fff;font-weight:700;font-size:12px;
+  box-shadow:var(--glow);
+}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;
+  transition:transform .1s,opacity .1s;
+}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-primary{background:var(--candy);color:#fff;box-shadow:var(--glow)}
+.btn-secondary{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+.btn-block{width:100%}
+.btn-sm{padding:8px 12px;font-size:12.5px;border-radius:9px}
+.btn-outline{background:transparent;border:1.5px solid var(--pink);color:var(--pink)}
+
+/* inputs */
+.input-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.input-field,.textarea-field{
+  width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:11px;
+  background:var(--surface);font-size:14px;color:var(--ink);outline:none;
+  transition:border-color .15s;
+}
+.input-field:focus,.textarea-field:focus{border-color:var(--pink)}
+.textarea-field{min-height:90px;resize:vertical;font-family:inherit}
+
+/* search */
+.search-row{display:flex;gap:8px;margin-bottom:12px}
+.search-box{
+  flex:1;display:flex;align-items:center;gap:6px;
+  background:var(--surface);border:1.5px solid var(--line);border-radius:11px;padding:0 12px;
+}
+.search-box input{flex:1;border:none;outline:none;padding:10px 0;font-size:13.5px;background:transparent}
+.search-btn{padding:10px 14px;border-radius:11px;background:var(--pink);color:#fff;font-weight:700;font-size:13px}
+
+/* empty */
+.empty-state{text-align:center;padding:40px 20px;color:var(--ink3)}
+.empty-icon{font-size:42px;margin-bottom:8px}
+.empty-title{font-weight:700;font-size:15px;color:var(--ink2)}
+
+/* modal */
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal-content{
+  width:100%;max-width:480px;max-height:88vh;overflow-y:auto;
+  background:var(--surface);border-radius:20px 20px 0 0;
+  padding:20px 16px calc(20px + var(--safe-b));
+  transform:translateY(40px);transition:transform .25s ease;
+}
+.modal-overlay.show .modal-content{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 14px}
+
+/* payment sheet */
+.pay-qr-wrap{
+  text-align:center;padding:12px 0;
+}
+.pay-qr-wrap img{
+  width:220px;height:220px;margin:0 auto 12px;
+  border-radius:12px;border:1px solid var(--line);
+  background:#fff;
+}
+.pay-amount{font-size:28px;font-weight:800;color:var(--pink);letter-spacing:-.02em}
+.pay-vpa{font-size:13px;color:var(--ink2);margin-top:4px}
+.pay-note{font-size:12px;color:var(--ink3);margin-top:8px}
+
+/* toast */
+#toastContainer{position:fixed;top:calc(60px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:200;width:90%;max-width:340px;pointer-events:none}
+.toast{
+  background:var(--ink);color:#fff;padding:11px 16px;border-radius:12px;
+  font-size:13px;font-weight:600;margin-bottom:8px;text-align:center;
+  animation:toastIn .25s ease;
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+.toast.success{background:#0D9488}
+.toast.err{background:#DC2626}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+/* flex utils */
+.flex{display:flex}.justify-between{justify-content:space-between}.items-center{align-items:center}
+.gap-1{gap:6px}.gap-2{gap:10px}.mt-1{margin-top:8px}.mt-2{margin-top:12px}.mb-1{margin-bottom:8px}.mb-2{margin-bottom:12px}
+.text-sm{font-size:13px}.text-xs{font-size:11px}.font-bold{font-weight:700}
+.text-pink{color:var(--pink)}.text-muted{color:var(--ink3)}
+
+/* skeleton */
+.skel{background:linear-gradient(90deg,var(--surface2) 25%,#ebe8ef 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">M</div>
+  <button class="acct-pill" onclick="switchTab('account')">
+    <span id="accountLabel">📱 No account</span>
+  </button>
+  <button class="wallet-chip" onclick="switchTab('account')">
+    💰 ₹<span id="walletBalance">0</span>
+  </button>
+</header>
+
+<main class="view" id="mainView">
+  <!-- ACCOUNT -->
+  <section class="page-pad" id="view-account">
+    <h2 class="page-title">Import Meesho Account</h2>
+    <div class="card">
+      <button class="btn btn-primary btn-block mb-2" onclick="showSignupModal()">
+        📲 Sign up with number · claim ₹170 OFF
+      </button>
+      <button class="btn btn-secondary btn-block mb-2" onclick="showBuyAccount()">
+        🛒 Buy ready account + free order @ ₹40
+      </button>
+      <div class="mt-2">
+        <label class="input-label">🔑 Login with Cookies</label>
+        <textarea class="textarea-field" id="cookieInput" placeholder="Paste cookies / JSON here…"></textarea>
+        <button class="btn btn-primary btn-block mt-1" onclick="loginWithCookies()">🔑 Login with Cookies</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="page-pad hidden" id="view-shop">
+    <h2 class="page-title">🛍️ Shop</h2>
+    <div class="search-row">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search products…" onkeydown="if(event.key==='Enter')searchProducts()">
+      </div>
+      <button class="search-btn" onclick="searchProducts()">Go</button>
+    </div>
+    <div class="product-grid" id="productGrid"></div>
+  </section>
+
+  <!-- CART -->
+  <section class="page-pad hidden" id="view-cart">
+    <h2 class="page-title">🛒 Cart</h2>
+    <div id="cartItems"></div>
+    <div class="card mt-2 hidden" id="cartSummary">
+      <div class="flex justify-between items-center mb-1">
+        <span class="font-bold">Total</span>
+        <span class="price-now" id="cartTotal">₹0</span>
+      </div>
+      <button class="btn btn-primary btn-block mt-2" onclick="checkout()">Proceed to Pay</button>
+    </div>
+  </section>
+
+  <!-- ORDERS -->
+  <section class="page-pad hidden" id="view-orders">
+    <h2 class="page-title">📦 Orders</h2>
+    <div id="ordersList"></div>
+  </section>
+
+  <!-- ADDRESS -->
+  <section class="page-pad hidden" id="view-address">
+    <h2 class="page-title">📍 Address</h2>
+    <div id="addressList"></div>
+    <button class="btn btn-primary btn-block mt-2" onclick="showAddAddress()">+ Add New Address</button>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="active" data-tab="shop" onclick="switchTab('shop')"><span class="ico">🛍️</span><span>Shop</span></button>
+  <button data-tab="cart" onclick="switchTab('cart')" style="position:relative">
+    <span class="ico">🛒</span><span>Cart</span>
+    <span class="badge hidden" id="cartBadge">0</span>
+  </button>
+  <button data-tab="orders" onclick="switchTab('orders')"><span class="ico">📦</span><span>Orders</span></button>
+  <button data-tab="address" onclick="switchTab('address')"><span class="ico">📍</span><span>Address</span></button>
+  <button data-tab="account" onclick="switchTab('account')"><span class="ico">👤</span><span>Account</span></button>
+</nav>
+
+<!-- Signup Modal -->
+<div class="modal-overlay" id="signupModal">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:18px;font-weight:800;margin-bottom:14px">🎉 Sign Up & Get ₹170</h3>
+    <label class="input-label">Mobile Number</label>
+    <input class="input-field mb-2" id="signupMobile" type="tel" maxlength="10" placeholder="10-digit number">
+    <label class="input-label">Name (optional)</label>
+    <input class="input-field mb-2" id="signupName" type="text" placeholder="Your name">
+    <button class="btn btn-primary btn-block" onclick="signup()">Create Account</button>
+    <button class="btn btn-secondary btn-block mt-1" onclick="closeModal('signupModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Payment Modal (Meesho-style QR) -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:17px;font-weight:800;text-align:center;margin-bottom:4px">Pay via UPI</h3>
+    <p class="text-xs text-muted" style="text-align:center;margin-bottom:12px">Official Meesho collect request</p>
+    <div class="pay-qr-wrap">
+      <img id="payQrImg" src="" alt="UPI QR">
+      <div class="pay-amount" id="payAmount">₹0</div>
+      <div class="pay-vpa" id="payVpa">meesho@ybl</div>
+      <div class="pay-note">Scan with any UPI app · GPay · PhonePe · Paytm</div>
+    </div>
+    <a id="payUpiLink" href="#" class="btn btn-primary btn-block mt-2" style="text-decoration:none">Open UPI App</a>
+    <button class="btn btn-outline btn-block mt-1" onclick="confirmPayment()">I have paid</button>
+    <button class="btn btn-secondary btn-block mt-1" onclick="closeModal('payModal')">Close</button>
+  </div>
+</div>
+
+<!-- Add Address Modal -->
+<div class="modal-overlay" id="addrModal">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:12px">Add Address</h3>
+    <label class="input-label">Label</label>
+    <input class="input-field mb-1" id="addrName" placeholder="Home / Office" value="Home">
+    <label class="input-label">Full Address</label>
+    <textarea class="textarea-field mb-1" id="addrFull" placeholder="House no, street, landmark"></textarea>
+    <label class="input-label">Pincode</label>
+    <input class="input-field mb-1" id="addrPin" type="text" maxlength="6" placeholder="6-digit">
+    <label class="input-label">Phone</label>
+    <input class="input-field mb-2" id="addrPhone" type="tel" maxlength="10" placeholder="10-digit">
+    <button class="btn btn-primary btn-block" onclick="saveAddress()">Save Address</button>
+    <button class="btn btn-secondary btn-block mt-1" onclick="closeModal('addrModal')">Cancel</button>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  try { tg.setHeaderColor('#9F1D4A'); tg.setBackgroundColor('#F7F5F8'); } catch(e){}
+}
+
+let token = localStorage.getItem('ml_token') || null;
+let user = null;
+let currentPaymentId = null;
+
+function haptic(t){ try{ tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} }
+
+function toast(msg, type='info'){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type||'');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 2800);
+}
+
+async function api(path, opts={}){
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (tg && tg.initData) headers['X-Tg-Init-Data'] = tg.initData;
+  try {
+    const r = await fetch(path, {
+      method: opts.method || 'GET',
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    const d = await r.json();
+    if (d && d.error === 'no_account') {
+      toast('Import a Meesho account first', 'err');
+      if (S.tab !== 'account') switchTab('account');
+    }
+    return d;
+  } catch(e) {
+    toast('Network error – try again', 'err');
+    return { ok:false, error:'network' };
+  }
+}
+
+const S = { tab: 'account', products: [] };
+
+function switchTab(tab){
+  haptic('light');
+  S.tab = tab;
+  document.querySelectorAll('.view section').forEach(s => s.classList.add('hidden'));
+  const el = document.getElementById('view-' + tab);
+  if (el) el.classList.remove('hidden');
+  document.querySelectorAll('.tabbar button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  if (tab === 'shop') loadProducts();
+  else if (tab === 'cart') loadCart();
+  else if (tab === 'orders') loadOrders();
+  else if (tab === 'address') loadAddresses();
+}
+
+function updateUI(){
+  if (user) {
+    document.getElementById('accountLabel').textContent = '👤 ' + (user.name || user.mobile);
+    document.getElementById('walletBalance').textContent = (user.wallet && user.wallet.balance) || 0;
+  }
+}
+
+function updateCartBadge(n){
+  const b = document.getElementById('cartBadge');
+  if (n > 0) { b.textContent = n; b.classList.remove('hidden'); }
+  else b.classList.add('hidden');
+}
+
+/* products */
+async function loadProducts(q){
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = Array(6).fill('<div class="product-card"><div class="skel" style="aspect-ratio:1"></div><div class="product-body"><div class="skel" style="height:14px;margin-bottom:6px"></div><div class="skel" style="height:18px;width:60%"></div></div></div>').join('');
+  const qs = q ? '?q=' + encodeURIComponent(q) + '&limit=24' : '?limit=24';
+  const d = await api('/api/meesho/for-you' + qs);
+  if (!d.ok || !d.products) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔒</div><div class="empty-title">Login first</div></div>';
+    return;
+  }
+  S.products = d.products;
+  renderProducts();
+}
+
+function renderProducts(){
+  const grid = document.getElementById('productGrid');
+  if (!S.products.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No products</div></div>';
+    return;
+  }
+  grid.innerHTML = S.products.map(p => `
+    <div class="product-card">
+      <img class="product-img" src="${p.image}" alt="" loading="lazy" onerror="this.src='https://picsum.photos/400/400?grayscale'">
+      <div class="product-body">
+        <div class="product-name">${esc(p.name)}</div>
+        <div class="price-row">
+          <span class="price-now">₹${p.finalPrice}</span>
+          <span class="price-old">₹${p.price}</span>
+          <span class="disc">${p.discount}% OFF</span>
+        </div>
+        <div class="rating">⭐ ${p.rating} · ${p.reviews} reviews</div>
+        <button class="add-btn" onclick="addToCart('${p.id}')">Add to Cart</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function searchProducts(){
+  const q = document.getElementById('searchInput').value.trim();
+  loadProducts(q);
+}
+
+async function addToCart(id){
+  haptic('medium');
+  const d = await api('/api/cart/add', { method:'POST', body:{ productId:id, qty:1 } });
+  if (d.ok) {
+    toast('Added to cart', 'success');
+    updateCartBadge(d.count);
+  }
+}
+
+/* cart */
+async function loadCart(){
+  const d = await api('/api/cart');
+  const box = document.getElementById('cartItems');
+  const sum = document.getElementById('cartSummary');
+  if (!d.ok || !d.items || !d.items.length) {
+    box.innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Cart is empty</div><div class="text-xs mt-1">Add products from Shop</div></div>';
+    sum.classList.add('hidden');
+    updateCartBadge(0);
+    return;
+  }
+  box.innerHTML = d.items.map(i => `
+    <div class="card flex gap-2 items-center">
+      <img src="${i.image}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--surface2)" onerror="this.style.display='none'">
+      <div style="flex:1;min-width:0">
+        <div class="font-bold text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(i.name)}</div>
+        <div class="text-pink font-bold mt-1">₹${i.price} × ${i.qty}</div>
+      </div>
+      <button class="btn btn-sm btn-secondary" onclick="removeFromCart('${i.productId}')">✕</button>
+    </div>
+  `).join('');
+  document.getElementById('cartTotal').textContent = '₹' + d.total;
+  sum.classList.remove('hidden');
+  updateCartBadge(d.count);
+}
+
+async function removeFromCart(id){
+  const d = await api('/api/cart/remove', { method:'POST', body:{ productId:id } });
+  if (d.ok) { loadCart(); toast('Removed'); }
+}
+
+/* checkout → payment QR */
+async function checkout(){
+  haptic('medium');
+  const d = await api('/api/orders/create', { method:'POST', body:{} });
+  if (!d.ok) {
+    toast(d.error || 'Could not create order', 'err');
+    return;
+  }
+  currentPaymentId = d.payment.id;
+  document.getElementById('payQrImg').src = d.payment.qrUrl;
+  document.getElementById('payAmount').textContent = '₹' + d.payment.amount;
+  document.getElementById('payVpa').textContent = d.payment.vpa + ' · ' + d.payment.payeeName;
+  const link = document.getElementById('payUpiLink');
+  link.href = d.payment.upiLink;
+  document.getElementById('payModal').classList.add('show');
+  toast('Scan QR or open UPI app', 'success');
+}
+
+async function confirmPayment(){
+  if (!currentPaymentId) return;
+  haptic('heavy');
+  const d = await api('/api/payments/' + currentPaymentId + '/confirm', { method:'POST' });
+  if (d.ok) {
+    closeModal('payModal');
+    toast('Payment confirmed! Order processing', 'success');
+    switchTab('orders');
+  } else {
+    toast(d.error || 'Confirm failed', 'err');
+  }
+}
+
+/* orders */
+async function loadOrders(){
+  const d = await api('/api/orders');
+  const box = document.getElementById('ordersList');
+  if (!d.ok || !d.orders || !d.orders.length) {
+    box.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No orders yet</div></div>';
+    return;
+  }
+  box.innerHTML = d.orders.map(o => {
+    const stColor = o.status === 'confirmed' || o.status === 'paid' ? 'var(--mint)' : o.status === 'pending_payment' ? 'var(--sun)' : 'var(--ink2)';
+    const stBg = o.status === 'confirmed' || o.status === 'paid' ? 'var(--mint-bg)' : '#FEF3C7';
+    return `
+    <div class="card">
+      <div class="flex justify-between items-center mb-1">
+        <span class="font-bold text-sm">${o.id}</span>
+        <span class="text-xs" style="background:${stBg};color:${stColor};padding:3px 8px;border-radius:6px;font-weight:700">${o.status.replace('_',' ')}</span>
+      </div>
+      <div class="text-pink font-bold">₹${o.total}</div>
+      <div class="text-xs text-muted mt-1">${new Date(o.createdAt).toLocaleString()}</div>
+      ${o.status === 'pending_payment' && o.paymentId ? `<button class="btn btn-sm btn-primary mt-2" onclick="reopenPay('${o.paymentId}')">Pay Now</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function reopenPay(payId){
+  const d = await api('/api/payments/' + payId);
+  if (!d.ok) { toast('Payment not found', 'err'); return; }
+  currentPaymentId = d.payment.id;
+  document.getElementById('payQrImg').src = d.payment.qrUrl;
+  document.getElementById('payAmount').textContent = '₹' + d.payment.amount;
+  document.getElementById('payVpa').textContent = d.payment.vpa + ' · ' + d.payment.payeeName;
+  document.getElementById('payUpiLink').href = d.payment.upiLink;
+  document.getElementById('payModal').classList.add('show');
+}
+
+/* address */
+async function loadAddresses(){
+  const d = await api('/api/addresses');
+  const box = document.getElementById('addressList');
+  if (!d.ok || !d.addresses || !d.addresses.length) {
+    box.innerHTML = '<div class="empty-state"><div class="empty-icon">📍</div><div class="empty-title">No addresses saved</div></div>';
+    return;
+  }
+  box.innerHTML = d.addresses.map(a => `
+    <div class="card">
+      <div class="font-bold">${esc(a.name)}</div>
+      <div class="text-sm mt-1">${esc(a.fullAddress)}</div>
+      <div class="text-xs text-muted mt-1">${a.pincode}${a.phone ? ' · ' + a.phone : ''}</div>
+    </div>
+  `).join('');
+}
+
+function showAddAddress(){ document.getElementById('addrModal').classList.add('show'); }
+async function saveAddress(){
+  const full = document.getElementById('addrFull').value.trim();
+  const pin = document.getElementById('addrPin').value.trim();
+  if (!full || !pin) { toast('Address & pincode required', 'err'); return; }
+  const d = await api('/api/addresses/add', {
+    method:'POST',
+    body:{
+      name: document.getElementById('addrName').value.trim() || 'Home',
+      fullAddress: full,
+      pincode: pin,
+      phone: document.getElementById('addrPhone').value.trim()
+    }
+  });
+  if (d.ok) {
+    closeModal('addrModal');
+    toast('Address saved', 'success');
+    loadAddresses();
+  } else toast(d.error || 'Failed', 'err');
+}
+
+/* auth */
+function showSignupModal(){ document.getElementById('signupModal').classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function showBuyAccount(){ toast('Contact admin for ready accounts', 'info'); }
+
+async function signup(){
+  const mobile = document.getElementById('signupMobile').value.trim();
+  const name = document.getElementById('signupName').value.trim();
+  if (mobile.length !== 10) { toast('Enter valid 10-digit number', 'err'); return; }
+  haptic('success');
+  const d = await api('/api/auth/signup', { method:'POST', body:{ mobile, name } });
+  if (d.ok) {
+    token = d.token;
+    localStorage.setItem('ml_token', token);
+    user = d.account;
+    updateUI();
+    closeModal('signupModal');
+    toast(d.message || 'Welcome!', 'success');
+    switchTab('shop');
+  } else toast(d.message || d.error || 'Signup failed', 'err');
+}
+
+async function loginWithCookies(){
+  const cookies = document.getElementById('cookieInput').value.trim();
+  if (!cookies) { toast('Paste cookies first', 'err'); return; }
+  haptic('success');
+  const d = await api('/api/auth/cookie-login', { method:'POST', body:{ cookies } });
+  if (d.ok) {
+    token = d.token;
+    localStorage.setItem('ml_token', token);
+    user = d.account;
+    updateUI();
+    toast('Login successful', 'success');
+    switchTab('shop');
+  } else toast(d.error || 'Login failed', 'err');
+}
+
+/* init */
+async function init(){
+  if (!token) {
+    // still allow viewing account tab
+    return;
+  }
+  const d = await api('/api/bootstrap');
+  if (d.ok) {
+    if (d.user) { user = { ...d.user, wallet: d.wallet }; updateUI(); }
+    updateCartBadge(d.cartCount || 0);
+  }
+}
+
+// default tab after login is shop; before that account
+if (token) switchTab('shop');
+else switchTab('account');
+init();
+</script>
+</body>
+</html>
